@@ -264,6 +264,19 @@ install_docker_client() {
     fi
 }
 
+install_docker-compose() {
+    # Releases - https://github.com/docker/compose/releases
+    local docker_compose_version="1.8.1"
+    local url="https://github.com/docker/compose/releases/download/$docker_compose_version/docker-compose-$(uname -s)-$(uname -m)"
+    local filename=$HOME/Downloads/docker-compose
+    local bindir=/usr/local/bin/
+
+    download_file $url $filename
+
+    sudo chmod +x $filename
+    sudo mv $filename $bindir
+}
+
 install_dvm() {
     local url="https://download.getcarina.com/dvm/latest/install.sh"
     local filename="$HOME/Downloads/dvm_install.sh"
@@ -546,8 +559,6 @@ do_spotify_preinstall
 
 sudo apt-get update
 
-remove_system_ruby
-
 apt_install chromium-browser
 apt_install httpie http
 apt_install jq
@@ -627,6 +638,7 @@ install_docker
 create_a_docker_group
 install_by_directory "$HOME/.dvm" "dvm"
 install_docker_client
+install_if_missing "docker-compose"
 
 # Personal Items
 apt_install keepass2
