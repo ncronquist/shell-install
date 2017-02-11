@@ -1,0 +1,12 @@
+version: '2'
+services:
+    ubuntu1404:
+        container_name: ubuntu1404
+        image: ncronquist/shell-install:ubuntu14.04
+        volumes:
+            - ${DEVSTART_PWD}:/home/ubuntu/shell-install
+    ubuntu1604:
+        container_name: ubuntu1604
+        image: ncronquist/shell-install:ubuntu16.04
+        volumes:
+            - ${DEVSTART_PWD}:/home/ubuntu/shell-install

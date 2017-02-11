@@ -1,0 +1,76 @@
+#!/bin/sh
+
+set -e
+
+usage() {
+  echo "usage: dev.sh <command> [<args>]
+
+Some useful commands are:
+run-tests      Run tests
+bash           Start a bash shell in a specified container
+               - Container Name (eg. ubuntu1404, ubuntu1604)
+cleanup        Cleans up docker containers and images"
+}
+
+run_tests() {
+    echo "Run tests for Ubuntu 14.04; Root password is ubuntu"
+    docker-compose run ubuntu1404 bash /home/ubuntu/shell-install/tests/debian-tests.sh
+    # docker start -ai $(docker ps -a -q --filter ancestor=ncronquist/shell-install:ubuntu14.04)
+    echo "Run tests for Ubuntu 16.04; Root password is ubuntu"
+    docker-compose run ubuntu1604 bash /home/ubuntu/shell-install/tests/debian-tests.sh
+}
+
+bash() {
+    local container_name=$1
+
+    if [ -z "$container_name" ]; then
+      echo "Error: You must enter a container name to run; ubuntu1404 or ubuntu1604"
+      echo "Run ./dev.sh -h to see available help."
+      exit 1;
+    fi
+
+    docker-compose run $container_name bash
+}
+
+cleanup() {
+    docker-compose kill -s SIGKILL
+    docker-compose rm -f --all
+    docker network prune -f
+
+    if [ $(docker ps -a -q --filter ancestor=ncronquist/shell-install:ubuntu14.04 | wc -l) -gt 0 ]; then
+      docker rm $(docker ps -a -q --filter ancestor=ncronquist/shell-install:ubuntu14.04)
+    fi
+
+    if [ $(docker ps -a -q --filter ancestor=ncronquist/shell-install:ubuntu16.04 | wc -l) -gt 0 ]; then
+      docker rm $(docker ps -a -q --filter ancestor=ncronquist/shell-install:ubuntu16.04)
+    fi
+}
+
+set_env_vars() {
+    export DEVSTART_PWD="$(pwd)"
+}
+
+main() {
+  set_env_vars
+  command="$1"
+  case $command in
+    "" | "-h" | "--help")
+      usage
+      ;;
+    "run-tests")
+      run_tests
+      ;;
+    "bash")
+      shift
+      bash "$@"
+      ;;
+    "cleanup")
+      cleanup
+      ;;
+    *)
+      usage
+      ;;
+  esac
+}
+
+main "$@"

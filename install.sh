@@ -477,6 +477,17 @@ install_slack() {
     sudo dpkg -i $filename
 }
 
+install_vagrant() {
+    # https://releases.hashicorp.com/vagrant/1.8.6/vagrant_1.8.6_i686.deb
+    # https://releases.hashicorp.com/vagrant/1.8.6/vagrant_1.8.6_x86_64.deb
+    local vagrant_version="1.8.6"
+    local url="https://releases.hashicorp.com/vagrant/${vagrant_version}/vagrant_${vagrant_version}_x86_64.deb"
+    local filename="$HOME/Downloads/vagrant_${vagrant_version}_x86_64.deb"
+
+    download_file $url $filename
+    sudo dpkg -i $filename
+}
+
 set_default_shell_to_zsh() {
     if [ $(echo $SHELL) == "/usr/bin/zsh" ]; then
         echo "Default shell already set to zsh"
@@ -565,6 +576,8 @@ apt_install jq
 apt_install git
 configure_git $USER_NAME $USER_EMAIL
 apt_install vim-gnome vim
+apt_install virtualbox
+apt_install virtualbox-ext-pack
 # Allows setup of better window management; I use Put to move windows from monitor to monitor
 apt_install compizconfig-settings-manager
 apt_install compiz-plugins
@@ -639,6 +652,7 @@ create_a_docker_group
 install_by_directory "$HOME/.dvm" "dvm"
 install_docker_client
 install_if_missing "docker-compose"
+install_if_missing vagrant
 
 # Personal Items
 apt_install keepass2
