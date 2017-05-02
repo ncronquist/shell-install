@@ -199,20 +199,17 @@ install_atom() {
     sudo dpkg -i $filename
 }
 
-install_bundler() {
-    gem install bundler
+# Installs sublime text
+install_subl() {
+    local url="https://download.sublimetext.com/sublime-text_build-3126_amd64.deb"
+    local filename="$HOME/Downloads/sublime-text_build-3126_amd64.deb"
+
+    download_file $url $filename
+    sudo dpkg -i $filename
 }
 
-get_docker_repo() {
-    # https://github.com/ncronquist/laptop/blob/thoughtbot-to-ncronquist/todo/ubuntu-shared-functions
-    if [ "$UBUNTU_VERSION_NUMBER" == "16.04" ]; then
-        echo "deb https://apt.dockerproject.org/repo ubuntu-xenial main"
-    elif [ "$UBUNTU_VERSION_NUMBER" == "14.04" ]; then
-        echo "deb https://apt.dockerproject.org/repo ubuntu-trusty main"
-    else
-        echo "Ooof, Ubuntu 16.04 and 14.04 are the only supported OS versions right now... Feel free to make a PR to add support for other versions"
-        exit 1
-    fi
+install_bundler() {
+    gem install bundler
 }
 
 install_docker() {
@@ -220,13 +217,10 @@ install_docker() {
         echo "docker not installed yet; installing now!"
         # Instructions found here: https://docs.docker.com/engine/installation/linux/ubuntulinux/
         # Add the new GPG key
-        sudo apt-key adv --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys 58118E89F3A912897C070ADBF76221572C52609D
-
-        # Find the repo for your version of ubuntu
-        local repo=$(get_docker_repo)
+        curl -fsSL https://yum.dockerproject.org/gpg | sudo apt-key add -
 
         # Add the reop information to your sources list
-        echo "$repo" | sudo tee /etc/apt/sources.list.d/docker.list
+        sudo add-apt-repository "deb https://apt.dockerproject.org/repo/ ubuntu-$(lsb_release -cs) main"
 
         # Update the APT package index
         sudo apt-get update
@@ -235,7 +229,7 @@ install_docker() {
         apt_install docker-engine
 
         # Start the docker service
-        sudo service docker start
+        # sudo service docker start
 
         # Configure Docker to start on boot
         # Ubuntu 15.04 and up uses systemd and requires the following command
@@ -266,7 +260,7 @@ install_docker_client() {
 
 install_docker-compose() {
     # Releases - https://github.com/docker/compose/releases
-    local docker_compose_version="1.8.1"
+    local docker_compose_version="1.10.0"
     local url="https://github.com/docker/compose/releases/download/$docker_compose_version/docker-compose-$(uname -s)-$(uname -m)"
     local filename=$HOME/Downloads/docker-compose
     local bindir=/usr/local/bin/
@@ -298,7 +292,7 @@ install_dvm() {
 }
 
 install_elixir() {
-    local version_name="1.3.2"
+    local version_name="1.4.2"
 
     kiex install "$version_name"
 
@@ -310,17 +304,10 @@ install_elixir() {
 
 install_erl() {
     # Erlang install
-    # GIT_TAG="OTP-18.3.2" # https://github.com/erlang/otp/tags
-    # VERSION_NAME="18.3.2" # The name you want to give this build (I generally just go with the version number)
-    # kerl build git https://github.com/erlang/otp.git $GIT_TAG $VERSION_NAME
 
-    # GIT_TAG="OTP-18.3.2" # https://github.com/erlang/otp/tags
-    VERSION_NAME="18.3.4.4" # The name you want to give this build (I generally just go with the version number)
-    kerl build "$VERSION_NAME" "$VERSION_NAME"
-
-    # Update kerl to use tarballs of Erlang from git tags
-    export KERL_BUILD_BACKEND=git
     kerl update releases
+    VERSION_NAME="18.3" # The name you want to give this build (I generally just go with the version number)
+    kerl build "$VERSION_NAME" "$VERSION_NAME"
 
     # Install the build
     mkdir -p $HOME/erlang/"$VERSON_NAME"
@@ -341,6 +328,15 @@ install_gvm() {
     bash < <(curl -s -S -L https://raw.githubusercontent.com/moovweb/gvm/master/binscripts/gvm-installer)
     . $HOME/.gvm/scripts/gvm
     append_to_shell_rc_files '[[ -s "$HOME/.gvm/scripts/gvm" ]] && source "$HOME/.gvm/scripts/gvm"'
+}
+
+install_google-chrome() {
+    local url="https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb"
+    local filename="$HOME/Downloads/google-chrome-stable_current_amd64.deb"
+
+    download_file $url $filename
+
+    sudo dpkg -i $filename
 }
 
 install_insync() {
@@ -565,12 +561,15 @@ fi
 append_to_shell_rc_files 'export PATH="$HOME/.bin:$PATH"'
 
 add_apt_repo "git-core/ppa"
-add_apt_repo "canonical-chromium-builds/stage"
+# add_apt_repo "canonical-chromium-builds/stage"
+add_apt_repo "yktooo/ppa"
 do_spotify_preinstall
 
 sudo apt-get update
+sudo apt-get upgrade -y
+sudo apt-get dist-upgrade -y
 
-apt_install chromium-browser
+# apt_install chromium-browser
 apt_install httpie http
 apt_install jq
 apt_install git
@@ -585,6 +584,8 @@ apt_install compiz-plugins
 apt_install unity-tweak-tool
 apt_install git-crypt
 apt_install vpnc
+# Adds an indicator in the notification bar to quickly switch sound sources
+apt_install indicator-sound-switcher
 
 # Erlang install dependencies
 apt_install m4
@@ -621,6 +622,7 @@ apt_install libbz2-dev
 # Docker install dependencies
 apt_install apt-transport-https
 apt_install ca-certificates
+apt_install software-properties-common
 apt_install linux-image-extra-$(uname -r)
 apt_install linux-image-extra-virtual
 
@@ -630,6 +632,7 @@ set_default_shell_to_zsh
 install_by_directory "$HOME/.oh-my-zsh" "oh-my-zsh"
 install_by_directory "$HOME/.nvm" "nvm"
 
+install_if_missing "google-chrome"
 install_if_missing rbenv
 install_if_missing "ruby-build"
 install_ruby
@@ -639,6 +642,7 @@ install_if_missing rails
 install_if_missing kubectl
 install_if_missing node
 install_if_missing atom
+install_if_missing subl
 install_if_missing kerl
 install_if_missing erl
 install_if_missing kiex
